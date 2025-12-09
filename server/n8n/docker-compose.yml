@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: rfp-automation-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # Basic Auth (change in production)
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin123
+      
+      # Webhook URL
+      - WEBHOOK_URL=http://localhost:5678/
+      
+      # Timezone
+      - GENERIC_TIMEZONE=Asia/Kolkata
+      - TZ=Asia/Kolkata
+      
+      # Execution mode
+      - EXECUTIONS_MODE=regular
+      
+      # Database (SQLite for simplicity, can use Postgres)
+      - DB_TYPE=sqlite
+      
+      # Enable public API
+      - N8N_API_KEY_AUTH_ENABLED=true
+      
+      # CORS settings
+      - N8N_CORS_ENABLED=true
+      
+    volumes:
+      # Persist n8n data
+      - ./n8n_data:/home/node/.n8n
+      
+      # Mount workflows for easy import
+      - ./workflows:/home/node/workflows
+    
+    networks:
+      - rfp-network
+
+networks:
+  rfp-network:
+    driver: bridge

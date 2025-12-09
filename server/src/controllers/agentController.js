@@ -122,7 +122,7 @@ export async function getAgentTasks(req, res, next) {
 }
 
 /**
- * Execute agent on an RFP (creates a task)
+ * Execute agent on an RFP (triggers n8n workflow)
  */
 export async function executeAgent(req, res, next) {
     try {
@@ -166,8 +166,8 @@ export async function executeAgent(req, res, next) {
             });
         }
 
-        // Create agent task
-        const { data: task, error } = await supabase
+        // Create agent task record
+        const { data: task, error: taskError } = await supabase
             .from('agent_tasks')
             .insert({
                 agent_id: agentId,
@@ -179,19 +179,73 @@ export async function executeAgent(req, res, next) {
             .select()
             .single();
 
-        if (error) {
-            logger.error('Error creating agent task:', error);
-            throw error;
+        if (taskError) {
+            logger.error('Error creating agent task:', taskError);
+            throw taskError;
         }
 
         logger.info(`Agent task created: ${task.id} for agent ${agent.name} on RFP ${rfp.title}`);
 
-        // TODO: Add task to queue for background processing
+        // Import n8n service
+        const { triggerAgentWorkflow } = await import('../services/n8nService.js');
 
-        res.status(201).json({
-            message: `${agent.name} has been queued to process this RFP`,
-            task
-        });
+        // Trigger n8n workflow
+        try {
+            const workflowResult = await triggerAgentWorkflow(agent.agent_type, {
+                taskId: task.id,
+                rfpData: rfp,
+                agentConfig: agent
+            });
+
+            // Update task with execution ID
+            if (workflowResult.executionId) {
+                await supabase
+                    .from('agent_tasks')
+                    .update({
+                        n8n_execution_id: workflowResult.executionId,
+                        status: 'running'
+                    })
+                    .eq('id', task.id);
+            }
+
+            logger.info(`n8n workflow triggered for ${agent.name}`, {
+                taskId: task.id,
+                executionId: workflowResult.executionId
+            });
+
+            res.status(201).json({
+                message: `${agent.name} workflow has been triggered via n8n`,
+                task: {
+                    ...task,
+                    n8n_execution_id: workflowResult.executionId,
+                    status: 'running'
+                },
+                n8n: {
+                    executionId: workflowResult.executionId,
+                    workflowType: agent.agent_type
+                }
+            });
+
+        } catch (n8nError) {
+            logger.error('Failed to trigger n8n workflow:', n8nError);
+
+            // Update task status to failed
+            await supabase
+                .from('agent_tasks')
+                .update({
+                    status: 'failed',
+                    result: { error: n8nError.message },
+                    completed_at: new Date().toISOString()
+                })
+                .eq('id', task.id);
+
+            return res.status(500).json({
+                error: 'Workflow Trigger Failed',
+                message: 'Failed to trigger n8n workflow. Please check n8n server status.',
+                task,
+                details: n8nError.message
+            });
+        }
 
     } catch (error) {
         next(error);

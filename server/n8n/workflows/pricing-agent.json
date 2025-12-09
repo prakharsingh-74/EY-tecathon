@@ -1,0 +1,284 @@
+{
+    "name": "Pricing Agent - Cost Calculation",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "pricing-agent",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "Webhook - Pricing Agent",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ],
+            "webhookId": "pricing-agent-webhook"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "task-id",
+                            "name": "taskId",
+                            "value": "={{ $json.taskId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "products",
+                            "name": "products",
+                            "value": "={{ $json.rfp.products }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "specs",
+                            "name": "specs",
+                            "value": "={{ $json.rfp.specs }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "rfp-id",
+                            "name": "rfpId",
+                            "value": "={{ $json.rfp.id }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "callback-url",
+                            "name": "callbackUrl",
+                            "value": "={{ $json.callbackUrl }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "extract-data",
+            "name": "Extract Product Data",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                470,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "unit-price",
+                            "name": "unitPrice",
+                            "value": "2847",
+                            "type": "number"
+                        },
+                        {
+                            "id": "quantity",
+                            "name": "quantity",
+                            "value": "500",
+                            "type": "number"
+                        },
+                        {
+                            "id": "total-price",
+                            "name": "totalPrice",
+                            "value": "1423500",
+                            "type": "number"
+                        },
+                        {
+                            "id": "lead-time",
+                            "name": "leadTime",
+                            "value": "12-14 weeks",
+                            "type": "string"
+                        },
+                        {
+                            "id": "actions",
+                            "name": "actions",
+                            "value": "[\"Analyzed {{ $json.products.length }} products\", \"Calculated material costs\", \"Applied volume discount (15%)\", \"Estimated labor and overhead\", \"Determined competitive unit price: $2,847\"]",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "ai-processing",
+            "name": "AI Pricing Calculation (Mock)",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                690,
+                300
+            ],
+            "notes": "Replace with AI cost calculation and market analysis"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "task-id-response",
+                            "name": "taskId",
+                            "value": "={{ $json.taskId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "status",
+                            "name": "status",
+                            "value": "success",
+                            "type": "string"
+                        },
+                        {
+                            "id": "result",
+                            "name": "result",
+                            "value": "={{ { \"pricing\": { \"unitPrice\": $json.unitPrice, \"quantity\": $json.quantity, \"totalPrice\": $json.totalPrice, \"leadTime\": $json.leadTime }, \"rfpUpdates\": { \"rfpId\": $('Extract Product Data').item.json.rfpId, \"pricing\": { \"unitPrice\": $json.unitPrice, \"quantity\": $json.quantity, \"totalPrice\": $json.totalPrice, \"leadTime\": $json.leadTime } } } }}",
+                            "type": "object"
+                        },
+                        {
+                            "id": "actions-response",
+                            "name": "actions",
+                            "value": "={{ $json.actions }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "execution-id",
+                            "name": "executionId",
+                            "value": "={{ $execution.id }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "prepare-callback",
+            "name": "Prepare Callback",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                910,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{ $json.callbackUrl }}",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "taskId",
+                            "value": "={{ $json.taskId }}"
+                        },
+                        {
+                            "name": "status",
+                            "value": "={{ $json.status }}"
+                        },
+                        {
+                            "name": "result",
+                            "value": "={{ $json.result }}"
+                        },
+                        {
+                            "name": "actions",
+                            "value": "={{ $json.actions }}"
+                        },
+                        {
+                            "name": "executionId",
+                            "value": "={{ $json.executionId }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "callback",
+            "name": "Callback to Backend",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4,
+            "position": [
+                1130,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"success\": true, \"taskId\": $json.taskId, \"executionId\": $execution.id } }}",
+                "options": {}
+            },
+            "id": "respond",
+            "name": "Respond to Webhook",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1350,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook - Pricing Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Product Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Product Data": {
+            "main": [
+                [
+                    {
+                        "node": "AI Pricing Calculation (Mock)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Pricing Calculation (Mock)": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare Callback",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare Callback": {
+            "main": [
+                [
+                    {
+                        "node": "Callback to Backend",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Callback to Backend": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [],
+    "triggerCount": 0,
+    "updatedAt": "2025-12-09T00:00:00.000Z",
+    "versionId": "1"
+}

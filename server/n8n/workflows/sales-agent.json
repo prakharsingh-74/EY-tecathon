@@ -1,0 +1,267 @@
+{
+    "name": "Sales Agent - RFP Detection",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "sales-agent",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "Webhook - Sales Agent",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ],
+            "webhookId": "sales-agent-webhook"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "task-id",
+                            "name": "taskId",
+                            "value": "={{ $json.taskId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "rfp-title",
+                            "name": "rfpTitle",
+                            "value": "={{ $json.rfp.title }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "rfp-source",
+                            "name": "rfpSource",
+                            "value": "={{ $json.rfp.source }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "callback-url",
+                            "name": "callbackUrl",
+                            "value": "={{ $json.callbackUrl }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "extract-data",
+            "name": "Extract Data",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                470,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "detected-specs",
+                            "name": "detectedSpecs",
+                            "value": "[\"Specification 1 extracted by AI\", \"Specification 2 extracted by AI\", \"Specification 3 extracted by AI\"]",
+                            "type": "array"
+                        },
+                        {
+                            "id": "confidence",
+                            "name": "confidence",
+                            "value": "0.94",
+                            "type": "number"
+                        },
+                        {
+                            "id": "actions",
+                            "name": "actions",
+                            "value": "[\"Fetched RFP content from {{ $json.rfpSource }}\", \"Analyzed document structure\", \"Extracted {{$ json.detectedSpecs.length }} specifications\", \"Identified submission requirements\"]",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "ai-processing",
+            "name": "AI Processing (Mock)",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                690,
+                300
+            ],
+            "notes": "Replace this with actual AI API call (OpenAI, Claude, etc.)"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "task-id-response",
+                            "name": "taskId",
+                            "value": "={{ $json.taskId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "status",
+                            "name": "status",
+                            "value": "success",
+                            "type": "string"
+                        },
+                        {
+                            "id": "result",
+                            "name": "result",
+                            "value": "={{ { \"specs\": $json.detectedSpecs, \"confidence\": $json.confidence, \"rfpTitle\": $json.rfpTitle } }}",
+                            "type": "object"
+                        },
+                        {
+                            "id": "actions-response",
+                            "name": "actions",
+                            "value": "={{ $json.actions }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "execution-id",
+                            "name": "executionId",
+                            "value": "={{ $execution.id }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "prepare-callback",
+            "name": "Prepare Callback",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                910,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{ $json.callbackUrl }}",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "taskId",
+                            "value": "={{ $json.taskId }}"
+                        },
+                        {
+                            "name": "status",
+                            "value": "={{ $json.status }}"
+                        },
+                        {
+                            "name": "result",
+                            "value": "={{ $json.result }}"
+                        },
+                        {
+                            "name": "actions",
+                            "value": "={{ $json.actions }}"
+                        },
+                        {
+                            "name": "executionId",
+                            "value": "={{ $json.executionId }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "callback",
+            "name": "Callback to Backend",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4,
+            "position": [
+                1130,
+                300
+            ],
+            "notes": "Sends results back to Express backend"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"success\": true, \"taskId\": $json.taskId, \"executionId\": $execution.id } }}",
+                "options": {}
+            },
+            "id": "respond",
+            "name": "Respond to Webhook",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1350,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook - Sales Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Data": {
+            "main": [
+                [
+                    {
+                        "node": "AI Processing (Mock)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Processing (Mock)": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare Callback",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare Callback": {
+            "main": [
+                [
+                    {
+                        "node": "Callback to Backend",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Callback to Backend": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [],
+    "triggerCount": 0,
+    "updatedAt": "2025-12-09T00:00:00.000Z",
+    "versionId": "1"
+}

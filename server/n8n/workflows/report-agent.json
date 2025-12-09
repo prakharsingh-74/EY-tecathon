@@ -1,0 +1,266 @@
+{
+    "name": "Report Agent - Proposal Generation",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "report-agent",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "Webhook - Report Agent",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ],
+            "webhookId": "report-agent-webhook"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "task-id",
+                            "name": "taskId",
+                            "value": "={{ $json.taskId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "rfp-data",
+                            "name": "rfpData",
+                            "value": "={{ $json.rfp }}",
+                            "type": "object"
+                        },
+                        {
+                            "id": "user-id",
+                            "name": "userId",
+                            "value": "={{ $json.rfp.user_id }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "callback-url",
+                            "name": "callbackUrl",
+                            "value": "={{ $json.callbackUrl }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "extract-data",
+            "name": "Extract RFP Data",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                470,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "report-content",
+                            "name": "reportContent",
+                            "value": "Professional RFP Response Proposal\\n\\nExecutive Summary: This proposal addresses all requirements...\\n\\nTechnical Specifications: Our solution meets all specified requirements...\\n\\nPricing: Competitive pricing with volume discounts...\\n\\nDelivery Timeline: {{ $json.rfpData.pricing.leadTime }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "report-summary",
+                            "name": "reportSummary",
+                            "value": "={{ { \"clientName\": $json.rfpData.source || 'Unknown Client', \"totalValue\": $json.rfpData.pricing?.totalPrice || 0, \"products\": ($json.rfpData.products || []).map(p => p.sku + ': ' + p.name), \"deliveryTimeline\": $json.rfpData.pricing?.leadTime || 'TBD', \"keyHighlights\": [ $json.rfpData.match_score + '% specification match', 'Competitive pricing with volume discounts', 'Fast delivery timeline', 'Full technical compliance', 'Extended warranty included' ] } }}",
+                            "type": "object"
+                        },
+                        {
+                            "id": "actions",
+                            "name": "actions",
+                            "value": "[\"Compiled all RFP analysis data\", \"Generated executive summary\", \"Created technical compliance section\", \"Formatted pricing breakdown\", \"Prepared professional proposal document\"]",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "ai-processing",
+            "name": "AI Report Generation (Mock)",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                690,
+                300
+            ],
+            "notes": "Replace with AI report generation (OpenAI, Claude) and PDF creation"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "task-id-response",
+                            "name": "taskId",
+                            "value": "={{ $json.taskId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "status",
+                            "name": "status",
+                            "value": "success",
+                            "type": "string"
+                        },
+                        {
+                            "id": "result",
+                            "name": "result",
+                            "value": "={{ { \"reportData\": { \"rfp_id\": $('Extract RFP Data').item.json.rfpData.id, \"user_id\": $json.userId, \"rfp_name\": $('Extract RFP Data').item.json.rfpData.title + ' Response', \"content\": $json.reportContent, \"summary\": $json.reportSummary, \"match_score\": $('Extract RFP Data').item.json.rfpData.match_score, \"status\": 'completed' } } }}",
+                            "type": "object"
+                        },
+                        {
+                            "id": "actions-response",
+                            "name": "actions",
+                            "value": "={{ $json.actions }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "execution-id",
+                            "name": "executionId",
+                            "value": "={{ $execution.id }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "prepare-callback",
+            "name": "Prepare Callback",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                910,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{ $json.callbackUrl }}",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "taskId",
+                            "value": "={{ $json.taskId }}"
+                        },
+                        {
+                            "name": "status",
+                            "value": "={{ $json.status }}"
+                        },
+                        {
+                            "name": "result",
+                            "value": "={{ $json.result }}"
+                        },
+                        {
+                            "name": "actions",
+                            "value": "={{ $json.actions }}"
+                        },
+                        {
+                            "name": "executionId",
+                            "value": "={{ $json.executionId }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "callback",
+            "name": "Callback to Backend",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4,
+            "position": [
+                1130,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"success\": true, \"taskId\": $json.taskId, \"executionId\": $execution.id } }}",
+                "options": {}
+            },
+            "id": "respond",
+            "name": "Respond to Webhook",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1350,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook - Report Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Extract RFP Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract RFP Data": {
+            "main": [
+                [
+                    {
+                        "node": "AI Report Generation (Mock)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Report Generation (Mock)": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare Callback",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare Callback": {
+            "main": [
+                [
+                    {
+                        "node": "Callback to Backend",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Callback to Backend": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [],
+    "triggerCount": 0,
+    "updatedAt": "2025-12-09T00:00:00.000Z",
+    "versionId": "1"
+}

@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { checkDatabaseConnection } from './config/database.js';
+import { checkN8nConnection } from './config/n8n.js';
 import logger from './utils/logger.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
@@ -12,6 +13,7 @@ import rfpRoutes from './routes/rfps.js';
 import agentRoutes from './routes/agents.js';
 import reportRoutes from './routes/reports.js';
 import settingsRoutes from './routes/settings.js';
+import webhookRoutes from './routes/webhooks.js';
 
 // Load environment variables
 dotenv.config();
@@ -35,12 +37,14 @@ app.use('/api', apiLimiter);
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
     const dbHealth = await checkDatabaseConnection();
+    const n8nHealth = await checkN8nConnection();
 
     res.json({
         status: 'OK',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         database: dbHealth ? 'Connected' : 'Disconnected',
+        n8n: n8nHealth ? 'Connected' : 'Disconnected',
         environment: process.env.NODE_ENV || 'development'
     });
 });
@@ -51,6 +55,9 @@ app.use('/api/rfps', rfpRoutes);
 app.use('/api/agents', agentRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRoutes);
+
+// Webhook routes (no auth required)
+app.use('/api/webhooks', webhookRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -109,6 +116,15 @@ async function startServer() {
 
         if (!dbConnected) {
             logger.warn('⚠️  Database connection failed, but server will start anyway');
+        }
+
+        // Check n8n connection
+        logger.info('Checking n8n connection...');
+        const n8nConnected = await checkN8nConnection();
+
+        if (!n8nConnected) {
+            logger.warn('⚠️  n8n connection failed. Agent workflows will not work.');
+            logger.info('ℹ️  To enable n8n: cd server/n8n && docker-compose up -d');
         }
 
         // Start listening

@@ -59,6 +59,8 @@ CREATE TABLE IF NOT EXISTS agent_tasks (
   status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'completed', 'failed')),
   actions JSONB DEFAULT '[]'::jsonb,
   result JSONB DEFAULT '{}'::jsonb,
+  n8n_execution_id VARCHAR(255),
+  n8n_workflow_id VARCHAR(255),
   started_at TIMESTAMP WITH TIME ZONE,
   completed_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

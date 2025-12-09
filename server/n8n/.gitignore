@@ -1,0 +1,6 @@
+# Ignore n8n data directory
+n8n_data/
+
+# Ignore sensitive files
+.env*
+!.env.example

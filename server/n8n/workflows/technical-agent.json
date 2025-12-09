@@ -1,0 +1,266 @@
+{
+    "name": "Technical Agent - Spec Analysis",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "technical-agent",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "Webhook - Technical Agent",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ],
+            "webhookId": "technical-agent-webhook"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "task-id",
+                            "name": "taskId",
+                            "value": "={{ $json.taskId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "rfp-specs",
+                            "name": "rfpSpecs",
+                            "value": "={{ $json.rfp.specs }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "rfp-title",
+                            "name": "rfpTitle",
+                            "value": "={{ $json.rfp.title }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "callback-url",
+                            "name": "callbackUrl",
+                            "value": "={{ $json.callbackUrl }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "extract-data",
+            "name": "Extract Specs",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                470,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "matched-products",
+                            "name": "matchedProducts",
+                            "value": "=[{\"sku\": \"SKU-P2847\", \"name\": \"Industrial Centrifugal Pump\", \"compatibility\": 94}, {\"sku\": \"SKU-V1842\", \"name\": \"Hydraulic Valve\", \"compatibility\": 88}]",
+                            "type": "array"
+                        },
+                        {
+                            "id": "match-score",
+                            "name": "matchScore",
+                            "value": "94",
+                            "type": "number"
+                        },
+                        {
+                            "id": "actions",
+                            "name": "actions",
+                            "value": "[\"Analyzed {{ $json.rfpSpecs.length }} specifications\", \"Queried product catalog\", \"Matched 2 products with high compatibility\", \"Calculated overall match score: 94%\"]",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "ai-processing",
+            "name": "AI Spec Matching (Mock)",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                690,
+                300
+            ],
+            "notes": "Replace with AI/Database query to match specs with product catalog"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "task-id-response",
+                            "name": "taskId",
+                            "value": "={{ $json.taskId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "status",
+                            "name": "status",
+                            "value": "success",
+                            "type": "string"
+                        },
+                        {
+                            "id": "result",
+                            "name": "result",
+                            "value": "={{ { \"matchedProducts\": $json.matchedProducts, \"matchScore\": $json.matchScore, \"rfpTitle\": $json.rfpTitle, \"rfpUpdates\": { \"rfpId\": $('Webhook - Technical Agent').item.json.rfp.id, \"products\": $json.matchedProducts, \"match_score\": $json.matchScore } } }}",
+                            "type": "object"
+                        },
+                        {
+                            "id": "actions-response",
+                            "name": "actions",
+                            "value": "={{ $json.actions }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "execution-id",
+                            "name": "executionId",
+                            "value": "={{ $execution.id }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "prepare-callback",
+            "name": "Prepare Callback",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                910,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{ $json.callbackUrl }}",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "taskId",
+                            "value": "={{ $json.taskId }}"
+                        },
+                        {
+                            "name": "status",
+                            "value": "={{ $json.status }}"
+                        },
+                        {
+                            "name": "result",
+                            "value": "={{ $json.result }}"
+                        },
+                        {
+                            "name": "actions",
+                            "value": "={{ $json.actions }}"
+                        },
+                        {
+                            "name": "executionId",
+                            "value": "={{ $json.executionId }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "callback",
+            "name": "Callback to Backend",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4,
+            "position": [
+                1130,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"success\": true, \"taskId\": $json.taskId, \"executionId\": $execution.id } }}",
+                "options": {}
+            },
+            "id": "respond",
+            "name": "Respond to Webhook",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1350,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook - Technical Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Extract Specs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Extract Specs": {
+            "main": [
+                [
+                    {
+                        "node": "AI Spec Matching (Mock)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Spec Matching (Mock)": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare Callback",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare Callback": {
+            "main": [
+                [
+                    {
+                        "node": "Callback to Backend",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Callback to Backend": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [],
+    "triggerCount": 0,
+    "updatedAt": "2025-12-09T00:00:00.000Z",
+    "versionId": "1"
+}

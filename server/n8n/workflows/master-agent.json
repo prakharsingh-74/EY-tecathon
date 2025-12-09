@@ -1,0 +1,278 @@
+{
+    "name": "Master Agent - Orchestrator",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "master-agent",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "Webhook - Master Agent",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ],
+            "webhookId": "master-agent-webhook"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "task-id",
+                            "name": "taskId",
+                            "value": "={{ $json.taskId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "rfp-id",
+                            "name": "rfpId",
+                            "value": "={{ $json.rfp.id }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "agent-id",
+                            "name": "agentId",
+                            "value": "={{ $json.agent.id }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "callback-url",
+                            "name": "callbackUrl",
+                            "value": "={{ $json.callbackUrl }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "workflow-step",
+                            "name": "workflowStep",
+                            "value": "1",
+                            "type": "number"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "init-workflow",
+            "name": "Initialize Workflow",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                470,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "workflow-status",
+                            "name": "workflowStatus",
+                            "value": "orchestrating",
+                            "type": "string"
+                        },
+                        {
+                            "id": "steps-completed",
+                            "name": "stepsCompleted",
+                            "value": "[\"Workflow initiated\", \"Sales agent would extract RFP requirements\", \"Technical agent would match products\", \"Pricing agent would calculate costs\", \"Report agent would generate proposal\"]",
+                            "type": "array"
+                        },
+                        {
+                            "id": "next-action",
+                            "name": "nextAction",
+                            "value": "Trigger Sales Agent workflow",
+                            "type": "string"
+                        },
+                        {
+                            "id": "actions",
+                            "name": "actions",
+                            "value": "[\"Received new RFP for processing\", \"Validated RFP data\", \"Planned orchestration sequence\", \"Would trigger Sales → Technical → Pricing → Report agents\", \"Prepared for multi-agent coordination\"]",
+                            "type": "array"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "orchestrate",
+            "name": "Orchestrate Agents (Mock)",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                690,
+                300
+            ],
+            "notes": "Replace with actual orchestration: trigger each agent workflow in sequence, wait for completion, pass results to next agent"
+        },
+        {
+            "parameters": {
+                "assignments": {
+                    "assignments": [
+                        {
+                            "id": "task-id-response",
+                            "name": "taskId",
+                            "value": "={{ $json.taskId }}",
+                            "type": "string"
+                        },
+                        {
+                            "id": "status",
+                            "name": "status",
+                            "value": "success",
+                            "type": "string"
+                        },
+                        {
+                            "id": "result",
+                            "name": "result",
+                            "value": "={{ { \"workflowStatus\": $json.workflowStatus, \"stepsCompleted\": $json.stepsCompleted, \"nextAction\": $json.nextAction, \"message\": 'Master agent orchestration initiated. In production, would trigger all agent workflows in sequence.' } }}",
+                            "type": "object"
+                        },
+                        {
+                            "id": "actions-response",
+                            "name": "actions",
+                            "value": "={{ $json.actions }}",
+                            "type": "array"
+                        },
+                        {
+                            "id": "execution-id",
+                            "name": "executionId",
+                            "value": "={{ $execution.id }}",
+                            "type": "string"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "prepare-callback",
+            "name": "Prepare Callback",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3,
+            "position": [
+                910,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "={{ $json.callbackUrl }}",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "taskId",
+                            "value": "={{ $json.taskId }}"
+                        },
+                        {
+                            "name": "status",
+                            "value": "={{ $json.status }}"
+                        },
+                        {
+                            "name": "result",
+                            "value": "={{ $json.result }}"
+                        },
+                        {
+                            "name": "actions",
+                            "value": "={{ $json.actions }}"
+                        },
+                        {
+                            "name": "executionId",
+                            "value": "={{ $json.executionId }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "callback",
+            "name": "Callback to Backend",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4,
+            "position": [
+                1130,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"success\": true, \"taskId\": $json.taskId, \"executionId\": $execution.id } }}",
+                "options": {}
+            },
+            "id": "respond",
+            "name": "Respond to Webhook",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1,
+            "position": [
+                1350,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook - Master Agent": {
+            "main": [
+                [
+                    {
+                        "node": "Initialize Workflow",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Initialize Workflow": {
+            "main": [
+                [
+                    {
+                        "node": "Orchestrate Agents (Mock)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Orchestrate Agents (Mock)": {
+            "main": [
+                [
+                    {
+                        "node": "Prepare Callback",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Prepare Callback": {
+            "main": [
+                [
+                    {
+                        "node": "Callback to Backend",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Callback to Backend": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [],
+    "triggerCount": 0,
+    "updatedAt": "2025-12-09T00:00:00.000Z",
+    "versionId": "1"
+}
