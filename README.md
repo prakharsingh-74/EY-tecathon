@@ -19,6 +19,9 @@ This platform helps industrial B2B manufacturers automate their RFP response wor
 - 24/7 automated operation
 
 ---
+## NOTE - 
+Project is still under development phase we have not done with the server, while on the client side everything is hardcoded for the few time.
+---
 
 ## 🏗️ Architecture
 
