@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Settings as SettingsIcon, Globe, Power, Zap, CheckCircle2, AlertCircle } from 'lucide-react';
+import { RFPSourceConfig } from './RFPSourceConfig';
 
 export function Settings() {
   const [autoScan, setAutoScan] = useState(true);
@@ -41,6 +42,9 @@ export function Settings() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Settings Panel */}
         <div className="lg:col-span-2 space-y-6">
+          {/* RFP Source Configuration - New Component */}
+          <RFPSourceConfig />
+
           {/* Auto-Scan Toggle */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-start justify-between mb-4">
@@ -76,60 +80,6 @@ export function Settings() {
                 </span>
               </div>
             )}
-          </div>
-
-          {/* RFP Source URLs */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                <Globe className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h3 className="text-gray-900">RFP Source URLs</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Configure platforms to monitor for new RFP opportunities
-                </p>
-              </div>
-            </div>
-
-            {/* Add New Source */}
-            <div className="flex gap-2 mb-4">
-              <input
-                type="text"
-                value={newSource}
-                onChange={(e) => setNewSource(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddSource()}
-                placeholder="Enter website URL (e.g., example.com)"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-              />
-              <button
-                onClick={handleAddSource}
-                className="px-6 py-2 bg-gradient-to-r from-teal-500 to-blue-600 text-white rounded-lg hover:shadow-lg transition-all"
-              >
-                Add Source
-              </button>
-            </div>
-
-            {/* Source List */}
-            <div className="space-y-2">
-              {rfpSources.map((source, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <Globe className="w-5 h-5 text-gray-400" />
-                    <span className="text-gray-900">{source}</span>
-                  </div>
-                  <button
-                    onClick={() => handleRemoveSource(source)}
-                    className="text-red-600 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity text-sm"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Manual Scan Trigger */}
