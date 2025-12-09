@@ -1,3 +1,7 @@
+
+# NOTE - 
+Project is still under development phase we have not done with the server, while on the client side everything is hardcoded for the few time.
+
 # AI-Powered RFP Automation Dashboard
 
 A comprehensive full-stack application that automates the Request for Proposal (RFP) response process using AI agents. The system detects RFPs from B2B platforms, analyzes technical specifications, generates competitive pricing, and creates professional proposals automatically.
@@ -18,9 +22,6 @@ This platform helps industrial B2B manufacturers automate their RFP response wor
 - 68% success rate on submitted proposals
 - 24/7 automated operation
 
----
-## NOTE - 
-Project is still under development phase we have not done with the server, while on the client side everything is hardcoded for the few time.
 ---
 
 ## 🏗️ Architecture
