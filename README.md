@@ -26,6 +26,7 @@ Project is still under development phase we have not done with the server, while
 ## 🏗️ Architecture
 
 **Architecture diagram :**
+<img width="7056" height="5760" alt="Image" src="https://github.com/user-attachments/assets/5e769af6-7e66-41d5-af4a-8b82ae23500f" />
 
 This is a **full-stack monorepo** with two main components:
 
