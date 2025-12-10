@@ -737,44 +737,6 @@ npm run seed     # Seed database with demo data
 
 ---
 
-## 🤝 Contributing
-
-This is a tecathon project. For internal team collaboration:
-
-1. Create a feature branch
-2. Make your changes
-3. Test thoroughly
-4. Submit for review
-
----
-
-## 📄 License
-
-ISC
-
----
-
-## 👨‍💻 Authors
-
-Built for **EY Tecathon 2025**
-
----
-
-## 📚 Additional Resources
-
-- [Client Documentation](client/src/README.md) - Frontend details
-- [Server Documentation](server/README.md) - API reference
-- [Setup Guide](server/SETUP_GUIDE.md) - Quick start
-- [Database Schema](server/src/db/schema.sql) - Complete schema
-
----
-
-**Status**: ✅ **Production Ready**
-
-**Last Updated**: December 9, 2025
-
----
-
 ## 🎯 Key Metrics
 
 - **Frontend**: React + TypeScript, 64+ components, fully responsive
